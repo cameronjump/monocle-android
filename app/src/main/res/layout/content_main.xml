@@ -41,6 +41,23 @@
             android:textSize="20dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:text="User PWD"/>
+
+        <EditText
+            android:id="@+id/userpwd"
+            android:layout_margin="10dp"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="text"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_margin="10dp"
+            android:textSize="20dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:text="Session ID"/>
 
         <EditText
@@ -52,16 +69,6 @@
             android:layout_height="wrap_content"
             android:imeOptions="actionDone"
             android:inputType="text"/>
-
-        <TextView
-            android:id="@+id/verificationstate"
-            android:textSize="20dp"
-            android:layout_margin="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textAlignment="center"
-            android:text="Not Verified"/>
 
         <Button
             android:id="@+id/verify"

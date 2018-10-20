@@ -26,5 +26,17 @@ public class CreateJSON {
         return json.toString();
     }
 
+    public static String answerQuestion(String id, String name, String answer) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("type", "answerQuestion");
+        JSONObject data = new JSONObject();
+        data.put("id",id);
+        data.put("name",name);
+        data.put("answer",answer);
+        String string = data.toString();
+        json.put("data",string);
+        return json.toString();
+    }
+
 
 }
