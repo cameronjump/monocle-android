@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,7 +25,8 @@ import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity {
 
-    private boolean verified = true;
+    private boolean verified = false;
+    private String TAG = "MainActivity ";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         }
         EditText userid = findViewById(R.id.userid);
         EditText sessionid = findViewById(R.id.sessionid);
+        sendVerifyRequest("Hi");
     }
 
     public void sendVerifyRequest(final String msg) {
@@ -76,9 +79,10 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
 
                     try {
+                        Log.d(TAG, "Sending request");
                         //Replace below IP with the IP of that device in which server socket open.
                         //If you change port then change the port number in the server side code also.
-                        Socket s = new Socket("xxx.xxx.xxx.xxx", 9002);
+                        Socket s = new Socket("10.131.182.129", 1337);
 
                         OutputStream out = s.getOutputStream();
 
@@ -88,8 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         output.flush();
                         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
                         final String st = input.readLine();
-                        Toast.makeText(MainActivity.this, st,
-                                Toast.LENGTH_LONG).show();
+                        Log.d(TAG,st);
 
                         output.close();
                         out.close();
