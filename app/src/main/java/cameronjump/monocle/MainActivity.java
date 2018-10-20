@@ -2,6 +2,7 @@ package cameronjump.monocle;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +14,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,9 +67,41 @@ public class MainActivity extends AppCompatActivity {
         }
         EditText userid = findViewById(R.id.userid);
         EditText sessionid = findViewById(R.id.sessionid);
-
-
     }
+
+    public void sendVerifyRequest(final String msg) {
+            final Handler handler = new Handler();
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    try {
+                        //Replace below IP with the IP of that device in which server socket open.
+                        //If you change port then change the port number in the server side code also.
+                        Socket s = new Socket("xxx.xxx.xxx.xxx", 9002);
+
+                        OutputStream out = s.getOutputStream();
+
+                        PrintWriter output = new PrintWriter(out);
+
+                        output.println(msg);
+                        output.flush();
+                        BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                        final String st = input.readLine();
+                        Toast.makeText(MainActivity.this, st,
+                                Toast.LENGTH_LONG).show();
+
+                        output.close();
+                        out.close();
+                        s.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread.start();
+    }
+
 
     public void changeVerificationState() {
         TextView vtext = findViewById(R.id.verificationstate);

@@ -21,5 +21,6 @@
         </activity>
         <activity android:name=".PollActivity"/>
     </application>
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>
