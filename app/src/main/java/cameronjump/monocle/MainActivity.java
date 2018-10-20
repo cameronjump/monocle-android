@@ -1,6 +1,7 @@
 package cameronjump.monocle;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
@@ -16,17 +17,26 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+
+import org.json.JSONException;
+import org.w3c.dom.Text;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private boolean verified = false;
     private String TAG = "MainActivity ";
+    private WebSocketClient mWebSocketClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,62 +52,47 @@ public class MainActivity extends AppCompatActivity {
                 verify();
             }
         });
-
-        Button pb = findViewById(R.id.poll);
-        pb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (verified) {
-                    Intent myIntent = new Intent(MainActivity.this, PollActivity.class);
-                    //myIntent.putExtra("key", value); //Optional parameters
-                    MainActivity.this.startActivity(myIntent);
-                }
-                else {
-                    Toast.makeText(MainActivity.this, "Please verify your session.",
-                            Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-
-        changeVerificationState();
     }
 
     public void verify() {
-        if (verified) {
-            Toast.makeText(MainActivity.this, "User already verified.",
-                    Toast.LENGTH_LONG).show();
-        }
         EditText userid = findViewById(R.id.userid);
+        String useridstring = userid.getText().toString();
         EditText sessionid = findViewById(R.id.sessionid);
-        sendVerifyRequest("Hi");
+        String sessionidstring = sessionid.getText().toString();
+        sendVerifyRequest(useridstring, sessionidstring);
     }
 
-    public void sendVerifyRequest(final String msg) {
+    public void sendVerifyRequest(final String userid, final String sessionid) {
             final Handler handler = new Handler();
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-
                     try {
                         Log.d(TAG, "Sending request");
                         //Replace below IP with the IP of that device in which server socket open.
                         //If you change port then change the port number in the server side code also.
-                        Socket s = new Socket("10.131.182.129", 1337);
+                        Socket s = new Socket("10.131.220.41", 1336);
 
                         OutputStream out = s.getOutputStream();
 
                         PrintWriter output = new PrintWriter(out);
 
-                        output.println(msg);
+                        String checkinRequest = CreateJSON.checkin(userid, sessionid);
+                        output.println(checkinRequest);
                         output.flush();
                         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
                         final String st = input.readLine();
                         Log.d(TAG,st);
+                        if(st.equals("1")) {
+                            MainActivity.this.startNextActivity();
+                        }
 
                         output.close();
                         out.close();
                         s.close();
                     } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
@@ -105,15 +100,10 @@ public class MainActivity extends AppCompatActivity {
             thread.start();
     }
 
-
-    public void changeVerificationState() {
-        TextView vtext = findViewById(R.id.verificationstate);
-        if(verified) {
-            vtext.setText("Verified? ✓");
-        }
-        else {
-            vtext.setText("Verified? X");
-        }
+    public void startNextActivity() {
+        Intent myIntent = new Intent(MainActivity.this, PollActivity.class);
+        //myIntent.putExtra("key", value); //Optional parameters
+        MainActivity.this.startActivity(myIntent);
     }
 
     @Override
