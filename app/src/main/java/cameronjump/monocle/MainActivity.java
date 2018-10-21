@@ -1,8 +1,13 @@
 package cameronjump.monocle;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -11,7 +16,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+
+import com.here.android.mpa.common.GeoCoordinate;
+import com.here.android.mpa.common.GeoPosition;
+import com.here.android.mpa.common.OnEngineInitListener;
+import com.here.android.mpa.common.PositioningManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,7 +32,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.ref.WeakReference;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +44,13 @@ public class MainActivity extends AppCompatActivity {
 
     private String TAG = "MainActivity ";
 
+    private PositioningManager posManager;
+
+    private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
+
+    private static final String[] REQUIRED_SDK_PERMISSIONS = new String[] {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +66,24 @@ public class MainActivity extends AppCompatActivity {
                 verify();
             }
         });
+
+        checkPermissions();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_PERMISSIONS:
+                for (int index = permissions.length - 1; index >= 0; --index) {
+                    if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
+                        Toast.makeText(this, "Required permission '" + permissions[index] + "' not granted, exiting", Toast.LENGTH_LONG).show();
+                        finish();
+                        return;
+                    }
+                }
+                getDirections();
+                break;
+        }
     }
 
     public void verify() {
@@ -99,6 +139,25 @@ public class MainActivity extends AppCompatActivity {
             thread.start();
     }
 
+    public void getDirections() {
+        posManager = PositioningManager.getInstance();
+        posManager.start(PositioningManager.LocationMethod.GPS_NETWORK);
+        posManager.on
+        GeoCoordinate coordinate;
+        if(posManager.getPosition().getCoordinate() != null) {
+            coordinate = posManager.getPosition().getCoordinate();
+        }
+        else if(posManager.getLastKnownPosition().getCoordinate() != null ){
+            coordinate = posManager.getLastKnownPosition().getCoordinate();
+        }
+        else {
+            // default nesco it park coordinates
+            //coordinates taken from here maps
+            coordinate = new GeoCoordinate(19.15254,72.85571);
+        }
+        Log.d("location",coordinate.toString());
+    }
+
     public void startNextActivity(String userid) {
         Intent myIntent = new Intent(MainActivity.this, PollActivity.class);
         myIntent.putExtra("name", userid); //Optional parameters
@@ -126,4 +185,25 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    protected void checkPermissions() {
+        final List<String> missingPermissions = new ArrayList<>();
+        for (final String permission : REQUIRED_SDK_PERMISSIONS) {
+            final int result = ContextCompat.checkSelfPermission(this, permission);
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                missingPermissions.add(permission);
+            }
+        }
+        if (missingPermissions.isEmpty()) {
+            final int[] grantResults = new int[REQUIRED_SDK_PERMISSIONS.length];
+            Arrays.fill(grantResults, PackageManager.PERMISSION_GRANTED);
+            onRequestPermissionsResult(REQUEST_CODE_ASK_PERMISSIONS, REQUIRED_SDK_PERMISSIONS,
+                    grantResults);
+        } else {
+            final String[] permissions = missingPermissions.toArray(new String[missingPermissions.size()]);
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_CODE_ASK_PERMISSIONS);
+        }
+    }
+
+
 }
