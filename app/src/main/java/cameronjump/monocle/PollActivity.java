@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +29,8 @@ public class PollActivity extends AppCompatActivity {
     private String id = "0";
     private String name = "";
 
+    private Button[] buttons;
+
     Thread requestQuestion;
 
     @Override
@@ -36,9 +39,6 @@ public class PollActivity extends AppCompatActivity {
         setContentView(R.layout.poll_activity);
         name = getIntent().getExtras().getString("name");
 
-        if(requestQuestion == null) {
-            requestQuestion();
-        }
     }
 
     public void displayQuestion(final int type, final int numchoices) {
@@ -53,23 +53,30 @@ public class PollActivity extends AppCompatActivity {
     public void displayQuestion(int type, final int numchoices, boolean yo) {
         LinearLayout layout = findViewById(R.id.layoutpoll);
         layout.removeAllViews();
-        TextView text = new TextView(PollActivity.this);
-        text.setTextSize(20);
-        text.setTextAlignment(1);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         params.setMargins(100,30,100,30);
-        text.setLayoutParams(params);
-        text.setText(id);
-        layout.addView(text);
-a
+        params.gravity = Gravity.CENTER;
+
+
         //Short answer
         if(type == 0) {
             TextView tvtype = new TextView(PollActivity.this);
             tvtype.setText("Short Answer");
+            tvtype.setGravity(Gravity.CENTER);
             layout.addView(tvtype);
+            tvtype.setTextSize(20);
+
+            TextView text = new TextView(PollActivity.this);
+            text.setTextSize(15);
+            text.setGravity(Gravity.CENTER);
+            text.setTextAlignment(1);
+            text.setLayoutParams(params);
+            text.setText(id);
+            layout.addView(text);
+
             EditText edit = new EditText(PollActivity.this);
             edit.setId(12345679);
             layout.addView(edit);
@@ -93,23 +100,39 @@ a
         if(type == 1) {
             TextView tvtype = new TextView(PollActivity.this);
             tvtype.setText("Multiple Choice");
+            tvtype.setTextSize(20);
+            tvtype.setGravity(Gravity.CENTER);
+            layout.addView(tvtype);
 
+
+            TextView text = new TextView(PollActivity.this);
+            text.setTextSize(15);
+            text.setGravity(Gravity.CENTER);
+            text.setTextAlignment(1);
+            text.setLayoutParams(params);
+            text.setText(id);
+            layout.addView(text);
+
+            buttons = new Button[numchoices];
             for (int i=0; i<numchoices; i++) {
                 Button button = new Button(PollActivity.this);
-                button.setId(979797 + i);
                 button.setText(String.valueOf(i));
                 button.setBackground(getDrawable(R.color.colorPrimaryDark));
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Button b = (Button) v;
-                        b.setBackgroundColor(getColor(R.color.colorPrimary));
-                        sendAnswer(((Button) v).getText().toString());
+                        Button butt = (Button) v;
+                        for (Button b: buttons) {
+                            b.setBackgroundColor(getColor(R.color.colorPrimaryDark));
+                        }
+                        butt.setBackgroundColor(getColor(R.color.colorPrimary));
+                        sendAnswer(butt.getText().toString());
 
 
                     }
                 });
                 button.setLayoutParams(params);
+                buttons[i] = button;
                 layout.addView(button);
             }
         }
@@ -134,7 +157,7 @@ a
                         output.flush();
                         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
                         final String st = input.readLine();
-                        Log.d(TAG, st);
+                        if(st != null) Log.d(TAG, st);
                         output.close();
                         out.close();
                         s.close();
@@ -205,4 +228,15 @@ a
         });
         requestQuestion.start();
     }
+
+    protected void onPause() {
+        super.onPause();
+        if(requestQuestion != null) requestQuestion.interrupt();
+    }
+
+    protected void onResume() {
+        super.onResume();
+        requestQuestion();
+    }
+
 }

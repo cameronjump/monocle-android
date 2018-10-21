@@ -14,6 +14,7 @@ import android.widget.EditText;
 
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -74,9 +75,16 @@ public class MainActivity extends AppCompatActivity {
                         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream()));
                         final String st = input.readLine();
                         Log.d(TAG,st);
-                        //if(st.equals("1")) {
-                            MainActivity.this.startNextActivity(userid);
-                        //}
+                        try {
+                            JSONObject json = new JSONObject(st);
+                            String data = (String) json.get("data");
+                            if(data.equals("0")) {
+                                MainActivity.this.startNextActivity(userid);
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
 
                         output.close();
                         out.close();

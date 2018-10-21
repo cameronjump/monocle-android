@@ -21,6 +21,9 @@
         </activity>
         <activity android:name=".PollActivity"/>
     </application>
+    <meta-data android:name="com.here.android.maps.appid" android:value="9n8Yb45ebm5VVIyNUNpj"/>
+    <meta-data android:name="com.here.android.maps.apptoken" android:value="oCxRdJ9N5Yd4EkSEB62q1Q"/>
     <uses-permission android:name="android.permission.INTERNET" />
+
 
 </manifest>
