@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 
 import org.json.JSONException;
@@ -25,7 +26,7 @@ import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String ip = "10.131.209.244";
+    public static final String ip = "35.238.254.108";
 
     private String TAG = "MainActivity ";
 
@@ -121,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Toast.makeText(MainActivity.this, "Made at Hack K-State 2018", Toast.LENGTH_SHORT);
             return true;
         }
 

@@ -1,6 +1,8 @@
 package cameronjump.monocle;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -10,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +23,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class PollActivity extends AppCompatActivity {
@@ -39,6 +44,9 @@ public class PollActivity extends AppCompatActivity {
         setContentView(R.layout.poll_activity);
         name = getIntent().getExtras().getString("name");
 
+        requestQuestion();
+        callAsynchronousTask();
+
     }
 
     public void displayQuestion(final int type, final int numchoices) {
@@ -50,9 +58,26 @@ public class PollActivity extends AppCompatActivity {
         });
     }
 
+    public void toastMe(final String text) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(PollActivity.this, text, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     public void displayQuestion(int type, final int numchoices, boolean yo) {
         LinearLayout layout = findViewById(R.id.layoutpoll);
         layout.removeAllViews();
+        if(id.equals("0")) {
+            TextView tvtype = new TextView(PollActivity.this);
+            tvtype.setText("Waiting for questions...");
+            tvtype.setGravity(Gravity.CENTER);
+            layout.addView(tvtype);
+            tvtype.setTextSize(20);
+            return;
+        }
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -113,10 +138,11 @@ public class PollActivity extends AppCompatActivity {
             text.setText(id);
             layout.addView(text);
 
+            String[] array = {"A","B","C","D","E","F","G","H","I","J"};
             buttons = new Button[numchoices];
             for (int i=0; i<numchoices; i++) {
                 Button button = new Button(PollActivity.this);
-                button.setText(String.valueOf(i));
+                button.setText(array[i]);
                 button.setBackground(getDrawable(R.color.colorPrimaryDark));
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -143,6 +169,7 @@ public class PollActivity extends AppCompatActivity {
             @Override
             public void run() {
                     try {
+                        Looper.prepare();
                         Log.d(TAG, "Sending request");
                         //Replace below IP with the IP of that device in which server socket open.
                         //If you change port then change the port number in the server side code also.
@@ -161,6 +188,7 @@ public class PollActivity extends AppCompatActivity {
                         output.close();
                         out.close();
                         s.close();
+                        toastMe("Answer Submitted");
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (JSONException e) {
@@ -171,15 +199,34 @@ public class PollActivity extends AppCompatActivity {
         thread.start();
     }
 
+    public void callAsynchronousTask() {
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        TimerTask doAsynchronousTask = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        try {
+                            requestQuestion();
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                        }
+                    }
+                });
+            }
+        };
+        timer.schedule(doAsynchronousTask, 0, 1000); //execute in every 50000 ms
+    }
+
     public void requestQuestion() {
         requestQuestion = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
                     try {
-                        if(Thread.interrupted()) {
+                        /*if(Thread.interrupted()) {
                             return;
-                        }
+                        }*/
                         Log.d(TAG, "Sending request");
                         //Replace below IP with the IP of that device in which server socket open.
                         //If you change port then change the port number in the server side code also.
@@ -199,44 +246,52 @@ public class PollActivity extends AppCompatActivity {
                             JSONObject json = new JSONObject(st);
                             JSONObject data = new JSONObject((String) json.get("data"));
                             System.out.println(json.toString());
-                            int jtype = (int)data.get("type");
                             String jid = (String) data.get("id");
-                            int jnumChoices = (int) data.get("numChoices");
-
-                            if (!jid.equals(id)) {
-                                PollActivity.this.displayQuestion(jtype, jnumChoices);
+                            if (id.equals(jid)) {
+                                return;
                             }
                             id = jid;
+                            try {
+                                int jtype = (int)data.get("type");
+                                int jnumChoices = (int) data.get("numChoices");
+                                PollActivity.this.displayQuestion(jtype, jnumChoices);
+                            }
+                            catch (Exception e) {
+                                e.printStackTrace();
+                                PollActivity.this.displayQuestion(0,0);
+
+                            }
                         }
                         catch (JSONException e) {
                             e.printStackTrace();
                         }
+                        finally {
+                            output.close();
+                            out.close();
+                            s.close();
+                        }
 
-                        output.close();
-                        out.close();
-                        s.close();
-                        Thread.sleep(2000);
                     } catch (IOException e) {
-                        e.printStackTrace();}
-                    catch (InterruptedException e) {
                         e.printStackTrace();}
                     catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
-            }
+
         });
         requestQuestion.start();
     }
 
     protected void onPause() {
         super.onPause();
-        if(requestQuestion != null) requestQuestion.interrupt();
+        //if(requestQuestion != null) requestQuestion.interrupt();
+        requestQuestion();
     }
 
     protected void onResume() {
         super.onResume();
         requestQuestion();
     }
+
 
 }

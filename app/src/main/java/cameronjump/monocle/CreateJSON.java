@@ -9,7 +9,7 @@ public class CreateJSON {
         JSONObject json = new JSONObject();
         json.put("type", "checkin");
         JSONObject data = new JSONObject();
-        data.put("user",user);
+        data.put("name",user);
         data.put("code",code);
         String string = data.toString();
         json.put("data",string);
